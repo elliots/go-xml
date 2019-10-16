@@ -580,6 +580,15 @@ func (s *Schema) parseTypes(root *xmltree.Element) (err error) {
 
 	for _, el := range root.Search(schemaNS, "complexType") {
 		t := s.parseComplexType(el)
+
+		if !t.Anonymous {
+			for _, c := range root.Children {
+				if c.Attr("", "name") == t.Name.Local {
+					t.Root = true
+				}
+			}
+		}
+
 		s.Types[t.Name] = t
 	}
 	for _, el := range root.Search(schemaNS, "simpleType") {

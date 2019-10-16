@@ -171,6 +171,8 @@ type ComplexType struct {
 	// If true, this type is allowed to contain character data that is
 	// not part of any sub-element.
 	Mixed bool
+	// Is root level
+	Root bool
 }
 
 func (*ComplexType) isType() {}

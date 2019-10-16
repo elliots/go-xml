@@ -681,6 +681,25 @@ func (cfg *Config) genComplexType(t *xsd.ComplexType) ([]spec, error) {
 	cfg.debugf("complexType %s: generating struct fields for %d elements and %d attributes",
 		xsd.XMLName(t).Local, len(elements), len(attributes))
 
+	if t.Root {
+		/*type TtrfbsListDoc struct {
+			XMLName xml.Name `xml:"http://austrac.gov.au/schema/reporting/TTR-FBS-3-0 ttr-fbsList"`
+			TtrfbsList
+		}*/
+		f := []ast.Expr{ast.NewIdent("XMLName"), ast.NewIdent("xml.Name"), gen.String(fmt.Sprintf(`xml:"%s %s"`, t.Name.Space, t.Name.Local))}
+		f = append(f, ast.NewIdent(cfg.public(t.Name)), ast.NewIdent(""), nil)
+		name := t.Name
+		name.Local = name.Local + "Doc"
+		s := spec{
+			doc:         t.Doc,
+			name:        cfg.public(name),
+			expr:        gen.Struct(f...),
+			xsdType:     t,
+			helperTypes: helperTypes,
+		}
+		result = append(result, s)
+	}
+
 	for _, el := range elements {
 		options := ""
 		if el.Nillable || el.Optional {
