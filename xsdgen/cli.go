@@ -95,6 +95,7 @@ func (cfg *Config) GenCLI(arguments ...string) error {
 		output       = fs.String("o", "xsdgen_output.go", "name of the output file")
 		verbose      = fs.Bool("v", false, "print verbose output")
 		debug        = fs.Bool("vv", false, "print debug output")
+		_            = fs.Bool("allowDuplicateNames", false, "allow clashing struct names")
 	)
 	fs.Var(&replaceRules, "r", "replacement rule 'regex -> repl' (can be used multiple times)")
 	fs.Var(&xmlns, "ns", "target namespace(s) to generate types for")

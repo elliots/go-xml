@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"go/ast"
 	"go/format"
+	"log"
 	"regexp"
 	"strings"
+	"unicode"
 
 	"aqwari.net/xml/internal/gen"
 	"aqwari.net/xml/xsd"
@@ -75,7 +77,7 @@ var DefaultOptions = []Option{
 	PackageName("ws"),
 	HandleSOAPArrayType(),
 	SOAPArrayAsSlice(),
-	UseFieldNames(),
+	UseFieldNames(false),
 }
 
 // The Namespaces option configures the code generation process
@@ -293,18 +295,31 @@ func replaceAllNamesRegex(reg *regexp.Regexp, repl string) Option {
 
 // The UseFieldNames Option names anonymous types based on the name
 // of the element or attribute they describe.
-func UseFieldNames() Option {
-	return ProcessTypes(useFieldNames)
+func UseFieldNames(allowDuplicateNames bool) Option {
+	return ProcessTypes(func(s xsd.Schema, t xsd.Type) xsd.Type {
+		return useFieldNames(s, t, allowDuplicateNames)
+	})
 }
 
-func useFieldNames(s xsd.Schema, t xsd.Type) xsd.Type {
-	used := make(map[xml.Name]struct{})
-	for _, t := range s.Types {
-		used[xsd.XMLName(t)] = struct{}{}
+func capitalize(in string) string {
+	x := string(unicode.ToTitle(rune(in[0])))
+	if len(in) > 1 {
+		x += in[1:]
 	}
+	return x
+}
+
+func useFieldNames(s xsd.Schema, t xsd.Type, allowDuplicateNames bool) xsd.Type {
+	used := make(map[xml.Name]struct{})
+
 	c, ok := t.(*xsd.ComplexType)
 	if !ok {
 		return t
+	}
+	if !allowDuplicateNames {
+		for _, t := range s.Types {
+			used[xsd.XMLName(t)] = struct{}{}
+		}
 	}
 	for _, el := range c.Elements {
 		switch base := el.Type.(type) {
@@ -318,10 +333,16 @@ func useFieldNames(s xsd.Schema, t xsd.Type) xsd.Type {
 			if !base.Anonymous {
 				break
 			}
-			if _, inuse := used[el.Name]; inuse {
-				break
+			name := el.Name
+			if _, inuse := used[name]; inuse {
+				name.Local = c.Name.Local + capitalize(el.Name.Local)
+				log.Printf("used: %+v trying: %+v", el.Name, name)
+				if _, inuse := used[name]; inuse {
+					// Nothing to be done. It'll be generated with a name like "AnonX"
+					break
+				}
 			}
-			base.Name = el.Name
+			base.Name = name
 			base.Anonymous = false
 		}
 	}
