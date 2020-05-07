@@ -705,7 +705,7 @@ func (cfg *Config) genComplexType(t *xsd.ComplexType) ([]spec, error) {
 		if el.Nillable || el.Optional {
 			options = ",omitempty"
 		}
-		tag := fmt.Sprintf(`xml:"%s%s" json:"%s%s"`, el.Name.Local, options, el.Name.Local, options)
+		tag := fmt.Sprintf(`xml:"%s%s" json:"%s"`, el.Name.Local, options, el.Name.Local)
 		base, err := cfg.expr(el.Type)
 		if err != nil {
 			return nil, fmt.Errorf("%s element %s: %v", t.Name.Local, el.Name.Local, err)
@@ -766,9 +766,9 @@ func (cfg *Config) genComplexType(t *xsd.ComplexType) ([]spec, error) {
 		}
 		var tag string
 		if qualified {
-			tag = fmt.Sprintf(`xml:"%s,attr%s" json:"%s,%s"`, attr.Name.Local, options, attr.Name.Local, options)
+			tag = fmt.Sprintf(`xml:"%s,attr%s" json:"%s"`, attr.Name.Local, options, attr.Name.Local)
 		} else {
-			tag = fmt.Sprintf(`xml:"%s,attr%s" json:"%s,%s"`, attr.Name.Local, options, attr.Name.Local, options)
+			tag = fmt.Sprintf(`xml:"%s,attr%s" json:"%s"`, attr.Name.Local, options, attr.Name.Local)
 		}
 		base, err := cfg.expr(attr.Type)
 		if err != nil {
